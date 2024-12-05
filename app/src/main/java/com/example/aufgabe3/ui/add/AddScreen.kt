@@ -1,35 +1,23 @@
 package com.example.aufgabe3.ui.add
 
+import android.app.DatePickerDialog
+import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import com.example.aufgabe3.viewmodel.SharedViewModel
+import com.example.aufgabe3.model.BookingEntry
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,10 +28,33 @@ fun AddScreen(
     var name by remember { mutableStateOf("") }
     var arrivalDate by remember { mutableStateOf<LocalDate?>(null) }
     var departureDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showArrivalDatePicker by remember { mutableStateOf(false) }
+    var showDepartureDatePicker by remember { mutableStateOf(false) }
 
-    var showDateRangePicker by remember { mutableStateOf(false) }
-
+    val context = LocalContext.current
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+
+    // Function to open DatePickerDialog
+    fun openDatePicker(isArrivalDate: Boolean) {
+        val calendar = Calendar.getInstance()
+
+        val datePickerDialog = DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
+                if (isArrivalDate) {
+                    arrivalDate = selectedDate
+                } else {
+                    departureDate = selectedDate
+                }
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+
+        datePickerDialog.show()
+    }
 
     Scaffold(
         topBar = {
@@ -71,27 +82,41 @@ fun AddScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Arrival Date Field
             OutlinedTextField(
-                value = if (arrivalDate != null && departureDate != null) {
-                    "${arrivalDate!!.format(dateFormatter)} - ${departureDate!!.format(dateFormatter)}"
-                } else {
-                    ""
-                },
+                value = arrivalDate?.format(dateFormatter) ?: "",
                 onValueChange = {},
-                label = { Text("Select Date Range") },
+                label = { Text("Arrival Date") },
                 enabled = false,
                 readOnly = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { showDateRangePicker = true },
+                    .clickable { openDatePicker(true) },
                 colors = OutlinedTextFieldDefaults.colors(
                     disabledTextColor = MaterialTheme.colorScheme.onSurface,
                     disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledSupportingTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Departure Date Field
+            OutlinedTextField(
+                value = departureDate?.format(dateFormatter) ?: "",
+                onValueChange = {},
+                label = { Text("Departure Date") },
+                enabled = false,
+                readOnly = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { openDatePicker(false) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
@@ -99,7 +124,14 @@ fun AddScreen(
 
             Button(
                 onClick = {
-                    // TODO Error handling and creating new BookingEntry and save in sharedViewModel
+                    if (name.isEmpty() || arrivalDate == null || departureDate == null) {
+                        Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                    } else {
+                        sharedViewModel.addBookingEntry(
+                            BookingEntry(name, arrivalDate!!, departureDate!!)
+                        )
+                        navController.popBackStack()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -107,12 +139,4 @@ fun AddScreen(
             }
         }
     }
-
-    // TODO implement DateRangePicker Dialog logic
-}
-
-@Composable
-fun DateRangePickerModal(
-) {
-    // TODO implement DateRangePicker see https://developer.android.com/develop/ui/compose/components/datepickers?hl=de
 }

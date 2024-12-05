@@ -13,21 +13,12 @@ import com.example.aufgabe3.viewmodel.SharedViewModel
 fun AppNavHost(navController: NavHostController) {
     val sharedViewModel: SharedViewModel = viewModel()
 
-    NavHost(navController, startDestination = "home") {
-
+    NavHost(navController = navController, startDestination = "home") {
         composable("home") {
-            HomeScreen(
-                navController = navController,
-                sharedViewModel = sharedViewModel
-            )
+            HomeScreen(navController = navController, sharedViewModel = sharedViewModel)
         }
-
         composable("add") {
-            AddScreen(
-                navController = navController,
-                sharedViewModel = sharedViewModel
-            )
+            AddScreen(navController = navController, sharedViewModel = sharedViewModel)
         }
-
     }
 }
